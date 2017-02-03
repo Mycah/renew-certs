@@ -1,0 +1,17 @@
+#!/bin/bash
+
+certpath=""
+acmepath=""
+challengepath=""
+apacherestartcmd="/etc/init.d/apache2 restart"
+
+for i in $certpath/*.crt; do
+  if [ $(date --date='+7 days' +%s) -gt $(date --date "$(openssl x509 -in $i -noout -enddate | awk -F "=" '{print $2}')" +%s) ]; then
+    python $acmepath --account-key $certpath/account.key --csr ${i:0:-4}.csr --acme-dir $challengepath > $i
+    updated="True"
+  fi
+done
+if ! [ -z ${updated+x} ]; then
+  $apacherestartcmd
+fi
+
